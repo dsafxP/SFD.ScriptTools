@@ -138,4 +138,39 @@ with ex ->
         eprintfn "Copy also failed: %s" copyEx.Message
         exit 1
 
+// Ensure the linked/copied DLL is gitignored
+
+let gitignorePath = Path.Combine(currentDir, ".gitignore")
+
+let gitignoreEntry =
+    Path.GetRelativePath(currentDir, fullOutputPath).Replace('\\', '/')
+
+let existingGitignoreLines =
+    if File.Exists gitignorePath then
+        File.ReadAllLines gitignorePath
+    else
+        [||]
+
+let alreadyIgnored =
+    existingGitignoreLines
+    |> Array.exists (fun line -> line.Trim() = gitignoreEntry)
+
+if alreadyIgnored then
+    printfn "'.gitignore' already contains an entry for '%s'." gitignoreEntry
+else if File.Exists gitignorePath then
+    let needsLeadingNewline =
+        existingGitignoreLines.Length > 0
+        && not (String.IsNullOrEmpty(Array.last existingGitignoreLines))
+
+    let textToAppend =
+        (if needsLeadingNewline then Environment.NewLine else "")
+        + gitignoreEntry
+        + Environment.NewLine
+
+    File.AppendAllText(gitignorePath, textToAppend)
+    printfn "Added '%s' to existing .gitignore." gitignoreEntry
+else
+    File.WriteAllText(gitignorePath, gitignoreEntry + Environment.NewLine)
+    printfn "Created .gitignore with entry '%s'." gitignoreEntry
+
 printfn "Done."
