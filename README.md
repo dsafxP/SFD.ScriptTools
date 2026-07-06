@@ -1,1 +1,1 @@
-# SFDScriptTools
+# SFD.ScriptTools
